@@ -28,5 +28,15 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "old_type/Admin.ts",
+    "old_type/Auth.ts",
+    "old_type/Cart.ts",
+    "old_type/Customer.ts",
+    "old_type/Order.ts",
+    "old_type/Product.ts",
+    "old_type/store.ts",
+    "old_type/User.ts"
+  ]
 }
