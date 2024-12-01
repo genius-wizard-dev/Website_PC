@@ -66,7 +66,7 @@ public class CartService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
         Product product = productRespository.findById(new ObjectId(productId)).orElse(null);
-        if (product.getInStock() <= existingItem.getQuantity() + 1) {
+        if (product.getInStock() <= existingItem.getQuantity()) {
             throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         } else {
             existingItem.setQuantity(existingItem.getQuantity() + 1);
