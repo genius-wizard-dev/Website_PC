@@ -18,6 +18,8 @@ const Detail = () => {
   const { toast } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -31,29 +33,29 @@ const Detail = () => {
       setProductDetail(response.data.result);
     };
     fetchProductDetail();
-  }, []);
-
-  const dispatch = useDispatch();
+  }, [id]);
 
   const handleAddCart = async () => {
+    if (isAddingToCart) return;
+
     if (!isLogin) {
       navigate("/login");
-      toast({
-        title: "Vui lòng đăng nhập để thêm vào giỏ hàng",
-      });
+      toast({ title: "Vui lòng đăng nhập để thêm vào giỏ hàng" });
       return;
     }
-    const getQuantity: number | undefined = items.find(
-      (item) => item.product.id === id
-    )?.quantity;
-    console.log(getQuantity);
-    if (getQuantity && product?.inStock! - getQuantity <= 0) {
-      toast({
-        title: "Sản phẩm không còn đủ số lượng trong kho",
-      });
+    if (!product) return;
+
+    const quantityInCart =
+      items.find((item) => item.product.id === id)?.quantity || 0;
+    const availableStock = product.inStock - quantityInCart;
+
+    if (availableStock <= 0) {
+      toast({ title: "Sản phẩm không còn đủ số lượng trong kho" });
       return;
     }
+
     try {
+      setIsAddingToCart(true);
       await dispatch(
         addToCart({
           userId: user?.id as string,
@@ -61,23 +63,22 @@ const Detail = () => {
           token: token as string,
         }) as any
       );
-      toast({
-        title: "Thêm vào giỏ hàng thành công",
-      });
-      dispatch(
+      await dispatch(
         getCartCount({
           userId: user?.id as string,
           token: token as string,
         }) as any
       );
+      toast({ title: "Thêm vào giỏ hàng thành công" });
     } catch (error) {
-      toast({
-        title: "Thêm vào giỏ hàng thất bại",
-      });
+      toast({ title: "Thêm vào giỏ hàng thất bại" });
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
-  if (!productDetail) return null;
+  if (!productDetail || !product) return null;
+
   return (
     <div className="container mx-auto px-4 pb-8">
       <div className="flex items-center gap-2 mb-4 text-gray-600">
@@ -178,13 +179,26 @@ const Detail = () => {
                 </div>
               )}
             </div>
-            <button
-              className="flex items-center justify-center gap-2 w-full bg-orange-500 text-white py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors"
-              onClick={handleAddCart}
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Thêm vào giỏ hàng
-            </button>
+            {product.inStock > 0 ? (
+              <button
+                onClick={handleAddCart}
+                disabled={isAddingToCart}
+                className={`flex items-center justify-center gap-2 w-full bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 ${
+                  isAddingToCart ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {isAddingToCart ? "Đang thêm..." : "Thêm vào giỏ hàng"}
+              </button>
+            ) : (
+              <button
+                className="flex items-center justify-center gap-2 w-full bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-500 transition-colors"
+                disabled
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Đã hết hàng
+              </button>
+            )}
           </div>
         </div>
       </div>
